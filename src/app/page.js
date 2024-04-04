@@ -178,7 +178,22 @@ function useEditTodoModalStatus() {
 }
 
 function TodoOptionDrawer({ status }) {
+  const [newContent, setNewContent] = React.useState('');
+
   const editTodoModalStatus = useEditTodoModalStatus();
+
+  const handleEditButtonClick = () => {
+    // 수정 버튼을 눌렀을 때 실행되는 함수
+    // 여기서 모달을 열도록 상태를 설정합니다.
+    editTodoModalStatus.open();
+  };
+
+  const handleEdit = () => {
+    // 수정 완료 버튼을 눌렀을 때 실행되는 함수
+    // 여기서 새로운 내용을 처리하고 모달을 닫습니다.
+    status.editTodo(status.todoId, newContent);
+    editTodoModalStatus.close();
+  };
 
   return (
     <>
@@ -189,9 +204,7 @@ function TodoOptionDrawer({ status }) {
             <span>Your Todo</span>
           </ListItem>
           <Divider className="tw-my-[5px]" />
-          <ListItemButton
-            onClick={editTodoModalStatus.open}
-            className="tw-p-[15px_20px] tw-flex tw-gap-2 tw-items-center">
+          <ListItemButton onClick={handleEditButtonClick} className="tw-p-[15px_20px] tw-flex tw-gap-2 tw-items-center">
             <span>수정</span>
             <FaPenToSquare className="block tw-mt-[-5px]" />
           </ListItemButton>
@@ -204,8 +217,21 @@ function TodoOptionDrawer({ status }) {
       <Modal
         open={editTodoModalStatus.opened}
         onClose={editTodoModalStatus.close}
-        className="tw-flex tw-justify-center tw-items-center">
-        <div className="tw-bg-white tw-p-10 tw-rounded-[20px]">안녕</div>
+        className="tw-flex tw-justify-center tw-items-center"
+      >
+        <div className="tw-bg-white tw-p-10 tw-rounded-[20px]">
+          <form onSubmit={handleEdit}>
+            <input
+              type="text"
+              value={newContent}
+              placeholder="수정할 내용을 입력하세요."
+              onChange={(e) => setNewContent(e.target.value)}
+            />
+            <button type="submit" variant="contained" className="tw-font-bold">
+              수정
+            </button>
+          </form>
+        </div>
       </Modal>
     </>
   );
