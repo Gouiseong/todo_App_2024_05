@@ -50,11 +50,26 @@ function useTodosStatus() {
     setTodos(newTodos);
   };
 
+  const findTodoIndexById = (id) => {
+    return todos.findIndex((todo) => todo.id == id);
+  };
+
+  const findTodoById = (id) => {
+    const index = findTodoIndexById(id);
+
+    if (index == -1) {
+      return null;
+    }
+
+    return todos[index];
+  };
+
   return {
     todos,
     addTodo,
     removeTodo,
     modifyTodo,
+    findTodoById,
   };
 }
 
@@ -96,7 +111,7 @@ const NewTodoForm = ({ todosState }) => {
   );
 };
 
-const TodoListItem = ({ todo, index, openDrawer }) => {
+const TodoListItem = ({ todo, index, openDrawer, todosState }) => {
   return (
     <>
       <li key={todo.id}>
@@ -177,26 +192,61 @@ function useEditTodoModalStatus() {
   };
 }
 
-function TodoOptionDrawer({ status }) {
-  const [newContent, setNewContent] = React.useState('');
+function EditTodoModal({ status, todosState, todo }) {
+  const onSubmit = (e) => {
+    e.preventDefault();
 
-  const editTodoModalStatus = useEditTodoModalStatus();
+    const form = e.currentTarget;
 
-  const handleEditButtonClick = () => {
-    // 수정 버튼을 눌렀을 때 실행되는 함수
-    // 여기서 모달을 열도록 상태를 설정합니다.
-    editTodoModalStatus.open();
-  };
+    form.content.value = form.content.value.trim();
 
-  const handleEdit = () => {
-    // 수정 완료 버튼을 눌렀을 때 실행되는 함수
-    // 여기서 새로운 내용을 처리하고 모달을 닫습니다.
-    status.editTodo(status.todoId, newContent);
-    editTodoModalStatus.close();
+    if (form.content.value.length == 0) {
+      alert('할 일 써');
+      form.content.focus();
+      return;
+    }
+
+    // todosState.addTodo(form.content.value);
+    // form.content.value = '';
+    // form.content.focus();
   };
 
   return (
     <>
+      <Modal
+        open={status.opened}
+        onClose={status.close}
+        className="tw-flex tw-justify-center tw-items-center">
+        <div className="tw-bg-white tw-p-10 tw-rounded-[20px] tw-w-full tw-max-w-lg">
+          <form onSubmit={onSubmit} className="tw-flex tw-flex-col tw-gap-2">
+            <TextField
+              minRows={3}
+              maxRows={10}
+              multiline
+              name="content"
+              autoComplete="off"
+              variant="outlined"
+              label="할 일 써"
+              defaultValue={todo?.content}
+            />
+            <Button variant="contained" className="tw-font-bold" type="submit">
+              수정
+            </Button>
+          </form>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+function TodoOptionDrawer({ status, todosState }) {
+  const editTodoModalStatus = useEditTodoModalStatus();
+
+  const todo = todosState.findTodoById(status.todoId);
+
+  return (
+    <>
+      <EditTodoModal status={editTodoModalStatus} todosState={todosState} todo={todo} />
       <SwipeableDrawer anchor="top" open={status.opened} onClose={status.close} onOpen={() => {}}>
         <List>
           <ListItem className="tw-flex tw-gap-2 tw-p-[15px]">
@@ -204,7 +254,9 @@ function TodoOptionDrawer({ status }) {
             <span>Your Todo</span>
           </ListItem>
           <Divider className="tw-my-[5px]" />
-          <ListItemButton onClick={handleEditButtonClick} className="tw-p-[15px_20px] tw-flex tw-gap-2 tw-items-center">
+          <ListItemButton
+            onClick={editTodoModalStatus.open}
+            className="tw-p-[15px_20px] tw-flex tw-gap-2 tw-items-center">
             <span>수정</span>
             <FaPenToSquare className="block tw-mt-[-5px]" />
           </ListItemButton>
@@ -214,25 +266,6 @@ function TodoOptionDrawer({ status }) {
           </ListItemButton>
         </List>
       </SwipeableDrawer>
-      <Modal
-        open={editTodoModalStatus.opened}
-        onClose={editTodoModalStatus.close}
-        className="tw-flex tw-justify-center tw-items-center"
-      >
-        <div className="tw-bg-white tw-p-10 tw-rounded-[20px]">
-          <form onSubmit={handleEdit}>
-            <input
-              type="text"
-              value={newContent}
-              placeholder="수정할 내용을 입력하세요."
-              onChange={(e) => setNewContent(e.target.value)}
-            />
-            <button type="submit" variant="contained" className="tw-font-bold">
-              수정
-            </button>
-          </form>
-        </div>
-      </Modal>
     </>
   );
 }
@@ -242,7 +275,7 @@ const TodoList = ({ todosState }) => {
 
   return (
     <>
-      <TodoOptionDrawer status={todoOptionDrawerStatus} />
+      <TodoOptionDrawer status={todoOptionDrawerStatus} todosState={todosState} />
       <nav>
         할 일 갯수 : {todosState.todos.length}
         <ul>
@@ -252,6 +285,7 @@ const TodoList = ({ todosState }) => {
               todo={todo}
               index={index}
               openDrawer={todoOptionDrawerStatus.open}
+              todosState={todosState}
             />
           ))}
         </ul>
